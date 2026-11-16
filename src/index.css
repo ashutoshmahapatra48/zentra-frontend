@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --color-primary: #277b64;
+  --color-primary-dark: #1c5d4c;
+  --color-primary-pale: #e6f3ee;
+  --color-secondary: #e9b872;
+  --color-surface: #f8faf8;
+  --color-sidebar: #17231f;
+  --color-sidebar-button: #1d2d27;
+  --color-sidebar-hover: #263b33;
+  --color-sidebar-ink: #eef7f2;
+  --color-sidebar-muted: #99aaa2;
+  --color-sidebar-line: #31443b;
+  --color-ink: #1d2925;
+  --color-muted: #718078;
+  --color-line: #dfe8e3;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+}
+button,
+input,
+textarea {
+  font: inherit;
+}
+.icon-button {
+  display: flex;
+  height: 34px;
+  width: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 500ms ease-out both;
+}
+.animate-fade-up-delay {
+  animation: fade-up 500ms 100ms ease-out both;
+}
