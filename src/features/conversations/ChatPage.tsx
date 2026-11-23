@@ -3,8 +3,10 @@ import { useAuth } from '../../app/providers';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { MessageList } from '../../components/chat/MessageList';
 import { MessageComposer } from '../../components/chat/MessageComposer';
+import { ToolActivity } from '../../components/chat/ToolActivity';
 import { getConversation, listConversations, streamChat } from './api';
 import type { ChatMessage, Conversation } from './api';
+import { MessageRole } from '../../types';
 
 export function ChatPage() {
   const { user, signOut } = useAuth();
@@ -12,6 +14,7 @@ export function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const refreshConversations = useCallback(
@@ -36,12 +39,34 @@ export function ChatPage() {
   const send = async (content: string) => {
     setBusy(true);
     setError('');
-    const optimistic: ChatMessage = { _id: crypto.randomUUID(), role: 'user', content };
+    const optimistic: ChatMessage = { _id: crypto.randomUUID(), role: MessageRole.User, content };
     const assistantId = crypto.randomUUID();
+    let streamConversationId = activeId;
     setMessages((current) => [...current, optimistic]);
     try {
       const result = await streamChat(activeId, content, {
-        onStart: (conversationId) => setActiveId(conversationId),
+        onStart: (conversationId, title) => {
+          streamConversationId = conversationId;
+          setActiveId(conversationId);
+          setConversations((current) => {
+            const existing = current.find((conversation) => conversation._id === conversationId);
+            if (existing)
+              return current.map((conversation) =>
+                conversation._id === conversationId ? { ...conversation, title } : conversation,
+              );
+            return [
+              { _id: conversationId, title, updatedAt: new Date().toISOString() },
+              ...current,
+            ];
+          });
+        },
+        onTitle: (title) =>
+          setConversations((current) =>
+            current.map((conversation) =>
+              conversation._id === streamConversationId ? { ...conversation, title } : conversation,
+            ),
+          ),
+        onTool: (name, status) => setActiveTool(status === 'started' ? name : null),
         onDelta: (delta) =>
           setMessages((current) => {
             const existing = current.find((message) => message._id === assistantId);
@@ -51,7 +76,7 @@ export function ChatPage() {
                   ? { ...message, content: message.content + delta }
                   : message,
               );
-            return [...current, { _id: assistantId, role: 'assistant', content: delta }];
+            return [...current, { _id: assistantId, role: MessageRole.Assistant, content: delta }];
           }),
       });
       setActiveId(result.conversationId);
@@ -63,6 +88,7 @@ export function ChatPage() {
       setError((e as Error).message);
     } finally {
       setBusy(false);
+      setActiveTool(null);
     }
   };
 
@@ -96,6 +122,7 @@ export function ChatPage() {
           {title}
         </header>
         <MessageList messages={messages} busy={busy} />
+        <ToolActivity toolName={activeTool} />
         <MessageComposer busy={busy} error={error} onSend={send} />
       </section>
     </main>

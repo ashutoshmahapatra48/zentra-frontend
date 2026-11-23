@@ -1,4 +1,10 @@
+import { lazy, Suspense } from 'react';
 import type { ChatMessage } from '../../features/conversations/api';
+import { MessageRole } from '../../types';
+
+const MarkdownContent = lazy(() =>
+  import('./MarkdownContent').then(({ MarkdownContent }) => ({ default: MarkdownContent })),
+);
 
 export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy: boolean }) {
   if (!messages.length)
@@ -17,15 +23,21 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
           <article
             key={message._id}
             className={
-              message.role === 'user'
+              message.role === MessageRole.User
                 ? 'ml-auto max-w-[85%] rounded-2xl bg-primary-pale p-4'
                 : 'whitespace-pre-wrap px-1 py-2'
             }
           >
             <p className="mb-1 text-xs font-semibold text-muted">
-              {message.role === 'user' ? 'You' : 'Zentra'}
+              {message.role === MessageRole.User ? 'You' : 'Zentra'}
             </p>
-            {message.content}
+            {message.role === MessageRole.Assistant ? (
+              <Suspense fallback={<div className="whitespace-pre-wrap">{message.content}</div>}>
+                <MarkdownContent content={message.content} />
+              </Suspense>
+            ) : (
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            )}
           </article>
         ))}
         {busy && (

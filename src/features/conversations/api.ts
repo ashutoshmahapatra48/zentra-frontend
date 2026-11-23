@@ -9,8 +9,10 @@ export const getConversation = (id: string) =>
 
 type StreamResult = { conversationId: string; message: ChatMessage };
 type StreamHandlers = {
-  onStart: (conversationId: string) => void;
+  onStart: (conversationId: string, title: string) => void;
+  onTitle: (title: string) => void;
   onDelta: (delta: string) => void;
+  onTool: (name: string, status: 'started' | 'completed') => void;
 };
 
 export async function streamChat(
@@ -34,8 +36,10 @@ export async function streamChat(
       ?.slice(6);
     if (!eventName || !dataLine) return;
     const data = JSON.parse(dataLine);
-    if (eventName === 'start') handlers.onStart(data.conversationId);
+    if (eventName === 'start') handlers.onStart(data.conversationId, data.title);
+    if (eventName === 'title') handlers.onTitle(data.title);
     if (eventName === 'delta') handlers.onDelta(data.delta);
+    if (eventName === 'tool') handlers.onTool(data.name, data.status);
     if (eventName === 'error') streamError = new Error(data.message || 'The stream failed');
     if (eventName === 'complete') completed = data.data as StreamResult;
   };
