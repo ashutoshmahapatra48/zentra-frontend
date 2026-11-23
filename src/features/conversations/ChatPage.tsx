@@ -49,15 +49,16 @@ export function ChatPage() {
           streamConversationId = conversationId;
           setActiveId(conversationId);
           setConversations((current) => {
-            const existing = current.find((conversation) => conversation._id === conversationId);
-            if (existing)
-              return current.map((conversation) =>
-                conversation._id === conversationId ? { ...conversation, title } : conversation,
-              );
-            return [
-              { _id: conversationId, title, updatedAt: new Date().toISOString() },
-              ...current,
-            ];
+            const updatedAt = new Date().toISOString();
+            const existing = current.some((conversation) => conversation._id === conversationId);
+            const updated = existing
+              ? current.map((conversation) =>
+                  conversation._id === conversationId
+                    ? { ...conversation, title, updatedAt }
+                    : conversation,
+                )
+              : [{ _id: conversationId, title, updatedAt }, ...current];
+            return updated.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
           });
         },
         onTitle: (title) =>
@@ -83,7 +84,6 @@ export function ChatPage() {
       setMessages((current) =>
         current.map((message) => (message._id === assistantId ? result.message : message)),
       );
-      await refreshConversations();
     } catch (e) {
       setError((e as Error).message);
     } finally {
